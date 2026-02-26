@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -o xtrace -o nounset -o pipefail -o errexit
 
 if [[ "$build_platform" == "linux-64" ]]; then
@@ -5,10 +6,8 @@ if [[ "$build_platform" == "linux-64" ]]; then
   CFLAGS=$(echo "$CFLAGS" | sed -E 's/-mtune=power[0-9]+\s*| \s*-mtune=power[0-9]+//g')
 fi
 
-# Required for cross-compiling with pkg-config
-export PKG_CONFIG_SYSROOT_DIR=$PREFIX
-export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
-export CARGO_BUILD_RUSTFLAGS="$CARGO_BUILD_RUSTFLAGS -L all=$PREFIX/lib"
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:$PREFIX/share/pkgconfig"
+export CARGO_BUILD_RUSTFLAGS="${CARGO_BUILD_RUSTFLAGS:-} -L all=$PREFIX/lib"
 
 if [[ "$c_compiler" == "clang" ]]; then
   echo "-L$BUILD_PREFIX/lib -Wl,-rpath,$BUILD_PREFIX/lib" > $BUILD_PREFIX/bin/$BUILD.cfg
@@ -27,4 +26,4 @@ cargo-bundle-licenses --format yaml --output THIRDPARTY.yml
 "$STRIP" "$PREFIX/bin/cargo-capi"
 
 # remove extra build file
-rm -f "${PREFIX}/.crates.toml"
+rm -f "${PREFIX}/.crates.toml" || true
